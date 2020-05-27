@@ -170,19 +170,24 @@ giveoutCards = state $ \(x:xs) -> (x,xs)
 getCards :: PlayingCards -> State PlayerCardsHold ()
 getCards y = state $ \xs -> ((), y:xs)
 
+checkCards :: State PlayerCardsHold PlayerGiveOut
+checkCards = state $ \(x:xs) -> (x,x:xs)
+
 -- | Each player's state
 -- >>> runState player1State []
 -- >>> (PlayingCards Ace Hearts,[])
 player1State :: State PlayerCardsHold PlayingCards
 player1State = do
   getCards $ PlayingCards Ace Hearts
-  -- getCards $ PlayingCards Ace Clubs
-  giveoutCards
+  getCards $ PlayingCards Ace Clubs
+  -- giveoutCards
+  checkCards
 
 player2State :: State PlayerCardsHold PlayingCards
 player2State = do
   getCards $ PlayingCards Ace Hearts
   getCards $ PlayingCards Ace Clubs
+  getCards $ PlayingCards Ace Diamonds
   giveoutCards
 
 player3State :: State PlayerCardsHold PlayingCards
