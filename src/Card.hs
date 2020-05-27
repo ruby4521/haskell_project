@@ -170,6 +170,7 @@ giveoutCards = state $ \(x:xs) -> (x,xs)
 getCards :: PlayingCards -> State PlayerCardsHold ()
 getCards y = state $ \xs -> ((), y:xs)
 
+-- | Check cards
 checkCards :: State PlayerCardsHold PlayerGiveOut
 checkCards = state $ \(x:xs) -> (x,x:xs)
 
