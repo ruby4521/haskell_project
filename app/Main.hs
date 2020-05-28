@@ -1,6 +1,7 @@
 module Main where
 
 import Card
+import Play
 import System.Random
 import System.Random.Shuffle (shuffleM)
 import Control.Monad.Random
