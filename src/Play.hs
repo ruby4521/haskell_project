@@ -16,8 +16,6 @@ type PlayerGiveOut = PlayingCards
 
 type DeckCardsHold = [PlayingCards]
 
-
-
 -- | Shuffle a deck of cards with IO monad
 -- >>> deck <- evalRandIO $ shuffle $ allCards 
 -- >>> deck
