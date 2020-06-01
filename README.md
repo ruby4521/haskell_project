@@ -6,6 +6,8 @@ My idea is to make a “Fan Tan” or “Sevens” poker card game. First, it wi
 I implement the shuffle-a-deck-of-cards function by getting a deck of cards in a random sequence. I'm still trying to figure out how am I going to implement the get-cards-from-a-random-deck action whether I should possible implement it with a state stack like monad which contains pop and push like function or something else. 
 
 ## How to run the file:
+The program will be run by `stack`. If you haven't, you can go to `https://docs.haskellstack.org/en/stable/README/` for more detail on installing `stack`.
+
 Since I haven't do the implementation in `Main.hs`, please go to the `src/` directory and run `Card.hs` file by typing `stack ghci Card.hs`
 
 If you haven't, you might have to install some of the packages like "System.Random", "Control.Monad.Random", "System.Random.Shuffle"
@@ -27,54 +29,6 @@ Below are some input functions that I currently implement.
 ` >>> allCards `
 
 `[PlayingCards Ace Hearts,Card Ace Diamonds ... , PlayingCards King Clubs] `
-
--- Check the content of all cards suits
-
-` >>> allSuits`
-
-`[Hearts,Diamonds,Spades,Clubs]`
- 
--- Check the content of all cards ranks
-
-`>>> allRanks`
-
-`[Ace,Two,Three,Four,Five,Six,Seven,Eight,Nine,Ten,Jack,Queen,King]`
-
--- Get the rank of the card
-
-`>>> getRank (PlayingCards Ace Hearts) `
-
-`Ace`
-
--- Get the suit of the card
-
-`>>> getSuit (PlayingCards Ace Hearts)`
-
-`Hearts`
-
--- Compare the suit and return true or false 
-
-`>>> compareSuit Hearts Clubs`
-
-`False`
-
-`>>> compareSuit Hearts Hearts`
-
-`True`
-
--- Compare the rank and return GT, EQ or LT
-
-`>>> compareRank Ace King`
-
-`LT`
-
-`>>> compareRank King Ace`
-
-`GT`
-
-`>>> compareRank King King`
-
-`EQ`
 
 -- Roll the dice to decide the order of the player (print random number in range 1 to 4)
 

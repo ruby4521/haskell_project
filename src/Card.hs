@@ -53,13 +53,6 @@ data PlayingCards = PlayingCards Rank Suit
 -- type of mutiple cards
 -- type Deck = [PlayingCards]
 
--- | type of each player's state (cards on hand)
-type PlayerCardsHold = [PlayingCards]
-
-
--- | type of each player give out cards
-type PlayerGiveOut = PlayingCards
-
 
 -- | type of game state
 -- type GameState = [(CardsOnHand, CardsGiven)]
