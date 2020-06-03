@@ -12,15 +12,18 @@ import System.Random.Shuffle
 type PlayerCardsHold = [PlayingCards]
 
 -- | type of each player give out cards
-type PlayerGiveOut = PlayingCards
+-- type PlayerGiveOut = PlayingCards
 
-type DeckCardsHold = [PlayingCards]
+-- type PlayerCheck = PlayingCards
+
+type GameCards = [PlayingCards]
 
 -- | Shuffle a deck of cards with IO monad
--- >>> deck <- evalRandIO $ shuffle $ allCards 
+-- >>> deck <- evalRandIO $ shuffleM $ allCards 
 -- >>> deck
--- shuffle :: RandomGen m => [c] -> Rand m [c]
--- shuffle xs = shuffleM xs
+
+-- shufflemy :: RandomGen m => [c] -> Rand m [c]
+-- shufflemy xs = shuffleM xs
 
 -- | shuffle a deck
 -- shuffleD :: IO [PlayingCards]
@@ -28,82 +31,6 @@ type DeckCardsHold = [PlayingCards]
 --     deck <- evalRandIO $ shuffle $ allCards 
 --     -- deck  liftRand $ shuffle $ allCards
 --     return $ deck 
-
-
--- | Apply player state with monad state
--- https://stackoverflow.com/questions/24103108/where-is-the-data-constructor-for-state
--- state :: (s -> (a, s)) -> State s a
--- runState :: State s a -> s -> (a, s)
-
--- pop :: State Stack Int  
--- pop = state $ \(x:xs) -> (x,xs)  
-
--- | Give out cards, similar to pop from a stack
-giveoutCards :: State PlayerCardsHold PlayerGiveOut
-giveoutCards = state $ \(x:xs) -> (x,xs)
-
--- | Check cards
-checkCards :: State PlayerCardsHold PlayerGiveOut
-checkCards = state $ \(x:xs) -> (x,x:xs)
-
--- push :: Int -> State Stack ()  
--- push a = state $ \xs -> ((),a:xs)  
-
--- | Get cards, similar to push item to a stack
-get1Card :: PlayingCards -> State PlayerCardsHold ()
-get1Card y = state $ \xs -> ((), y:xs)
-
-getnCards :: [PlayingCards] -> State PlayerCardsHold ()
-getnCards ys = state $ \xs -> ((), ys++xs)
-
-
-
-
-
-
--- | Each player's state
--- >>> runState player1State []
--- (PlayingCards Ace Clubs,[PlayingCards Ace Clubs,PlayingCards Ace Hearts])
--- shuffle': do a random shuffle without IO monad
--- http://hackage.haskell.org/package/random-shuffle-0.0.4/docs/System-Random-Shuffle.html
-
-player1State :: State PlayerCardsHold PlayingCards
-player1State = do
-  let deck = shuffle' allCards 52 (mkStdGen 0)
-  getnCards $ playerGet 0 12 deck
-  checkCards
-
-player2State :: State PlayerCardsHold PlayingCards
-player2State = do
-  let deck = shuffle' allCards 52 (mkStdGen 0)
-  getnCards $ playerGet 13 25 deck
-  checkCards
-
-player3State :: State PlayerCardsHold PlayingCards
-player3State = do
-  let deck = shuffle' allCards 52 (mkStdGen 0)
-  getnCards $ playerGet 26 38 deck
-  giveoutCards
-
-player4State :: State PlayerCardsHold PlayingCards
-player4State = do
-  let deck = shuffle' allCards 52 (mkStdGen 0)
-  getnCards $ playerGet 39 51 deck
-  -- giveoutCards
-  checkCards
-
-deckState :: State DeckCardsHold PlayingCards
-deckState = undefined
-
-run :: State PlayingCards PlayingCards -> (PlayingCards, PlayerCardsHold)
-run = undefined
-
--- | game state
-type Game = [PlayerCardsHold]
-
-gameState :: State Game PlayingCards
-gameState = undefined
-
 
 -- | Roll the dice to determine the sequence of players
 rollDice :: IO Int
@@ -116,9 +43,6 @@ getnthCards :: Int -> [a] -> a
 getnthCards n cardsList = cardsList !! n
 
 -- | Display a range from a list: dispRange low high from a list
--- https://stackoverflow.com/questions/52711108/how-display-list-given-range-in-haskell
-dispRange :: Int -> Int -> [a] -> [a]
-dispRange i j cardsList = take (j-i+1) (drop i cardsList)
 
 -- take :: Int -> [a] -> [a]
 -- take n, applied to a list xs, returns the prefix of xs of length n, or xs itself if n > length xs
@@ -127,4 +51,129 @@ dispRange i j cardsList = take (j-i+1) (drop i cardsList)
 
 -- | Each player get the cards from deck without state monad
 playerGet :: Int -> Int -> [a] -> [a]
-playerGet m n xs = dispRange m n xs
+playerGet m n xs = take (n-m+1) (drop m xs)
+
+-- | Apply player state with monad state
+-- https://stackoverflow.com/questions/24103108/where-is-the-data-constructor-for-state
+-- state :: (s -> (a, s)) -> State s a
+-- runState :: State s a -> s -> (a, s)
+
+-- pop :: State Stack Int  
+-- pop = state $ \(x:xs) -> (x,xs)  
+
+-- | Give out cards, similar to pop from a stack
+giveoutCards :: State PlayerCardsHold PlayingCards
+giveoutCards = state $ \(x:xs) -> (x,xs)
+
+-- | Check cards
+checkCards :: State PlayerCardsHold PlayingCards
+checkCards = state $ \(x:xs) -> (x,x:xs)
+
+-- checkStart :: State PlayerCardsHold PlayingCards
+-- checkStart = state $ \(x:xs) -> if (PlayingCards Seven Diamonds) `elem` (x:xs) == True
+--                                   then (PlayingCards Seven Diamonds, xs)
+-- checkStart = undefined
+
+-- | Check game 
+checkGame :: State GameCards PlayingCards
+checkGame = state $ \(ys:xs) -> (ys,ys:xs)
+-- checkGame = undefined
+
+-- push :: Int -> State Stack ()  
+-- push a = state $ \xs -> ((),a:xs)  
+
+-- | Get cards, similar to push item to a stack, primitive: put x
+-- get1Card :: PlayingCards -> State PlayerCardsHold ()
+-- get1Card y = state $ \xs -> ((), y:xs)
+
+getnCards :: [PlayingCards] -> State PlayerCardsHold ()
+getnCards ys = state $ \xs -> ((), ys++xs)
+
+
+-- | Each player's state
+-- >>> runState player1State []
+-- >>> evalState player1State []
+--  returns the final result: PlayingCards Ten Clubs
+-- >>> execState player1State []
+--  returns the final state: [PlayingCards Ten Clubs,PlayingCards Ten Spades, ....,]
+-- shuffle': do a random shuffle without IO monad
+-- http://hackage.haskell.org/package/random-shuffle-0.0.4/docs/System-Random-Shuffle.html
+
+
+player1State :: State PlayerCardsHold PlayingCards
+player1State = do
+  let deck = shuffle' allCards 52 (mkStdGen 0)
+  put $ playerGet 0 12 deck
+  -- getnCards $ playerGet 0 12 deck
+  checkCards
+
+player2State :: State PlayerCardsHold PlayingCards
+player2State = do
+  let deck = shuffle' allCards 52 (mkStdGen 0)
+  -- getnCards $ playerGet 13 25 deck
+  put $ playerGet 13 25 deck
+  checkCards
+
+player3State :: State PlayerCardsHold PlayingCards
+player3State = do
+  let deck = shuffle' allCards 52 (mkStdGen 0)
+  -- getnCards $ playerGet 26 38 deck
+  put $ playerGet 26 38 deck
+  giveoutCards
+
+player4State :: State PlayerCardsHold PlayingCards
+player4State = do
+  let deck = shuffle' allCards 52 (mkStdGen 0)
+  -- getnCards $ playerGet 39 51 deck
+  put $ playerGet 39 51 deck
+  -- giveoutCards
+  checkCards
+
+
+-- deckState :: State DeckCardsHold PlayingCards
+-- deckState = undefined
+
+-- | game state
+-- data GameState = GameState {
+--   player1State :: PlayingCards
+--   player2State :: PlayingCards
+--   player3State :: PlayingCards
+--   player4State :: PlayingCards
+-- }
+
+-- gameState :: State Game PlayingCards
+-- gameState = undefined
+
+run1 :: IO ()
+run1 = do
+  putStrLn "Player1 check:"
+  print $ evalState player1State []
+  putStrLn "Player1 hand:"
+  print $ execState player1State []
+
+run2 :: IO ()
+run2 = do
+  putStrLn "Player2 check:"
+  print $ evalState player2State []
+  putStrLn "Player2 hand:"
+  print $ execState player2State []
+
+run3 :: IO ()
+run3 = do
+  putStrLn "Player3 check:"
+  print $ evalState player3State []
+  putStrLn "Player3 hand:"
+  print $ execState player3State []
+
+run4 :: IO ()
+run4 = do
+  putStrLn "Player4 check:"
+  print $ evalState player4State []
+  putStrLn "Player4 hand:"
+  print $ execState player4State []
+
+-- safeDiv :: Int -> Int -> Maybe Int
+-- safeDiv x y = do
+--   guard (y /= 0)
+--   return (x `div` y)
+
