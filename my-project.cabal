@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 8da4bf48ca5c086ddf05f195ac80bf2bba070f1fdce2bdd17f53adc579aaa864
+-- hash: 3f5d82d595b1ba566c072dfda396df7eab91a954fbc1d6febe3c664bbe1d06d8
 
 name:           my-project
 version:        0.1.0.0
@@ -28,6 +28,7 @@ source-repository head
 library
   exposed-modules:
       Card
+      Game
       Play
   other-modules:
       Paths_my_project

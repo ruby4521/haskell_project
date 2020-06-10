@@ -1,28 +1,4 @@
--- {-# LANGUAGE ScopedTypeVariables #-}
-module Card
-    -- ( 
-    --     -- someFunc
-    --     allCards, 
-    --     allSuits, 
-    --     allRanks, 
-    --     nRanks, 
-    --     nSuits, 
-    --     getRank, 
-    --     getSuit, 
-    --     compareSuit, 
-    --     compareRank, 
-    --     rollDice, 
-    --     shuffle, 
-    --     shuffleD
-    --     PlayingCards
-    --     -- randomCard
-    -- )
-     where
-
-import System.Random
-import System.Random.Shuffle (shuffleM)
-import Control.Monad.Random
-import Control.Monad.State
+module Card where
 
 -- | data type for card: suit and rank
 data Rank = Ace
@@ -44,21 +20,16 @@ data Suit = Hearts
           | Diamonds
           | Spades
           | Clubs
-        deriving (Show, Eq, Ord, Enum, Bounded, Read)
+        deriving (Show, Eq, Ord, Enum, Bounded)
 
 -- | data type for card value
 data PlayingCards = PlayingCards Rank Suit
             deriving (Show, Eq, Ord)
 
--- type of mutiple cards
--- type Deck = [PlayingCards]
-
-
--- | type of game state
--- type GameState = [(CardsOnHand, CardsGiven)]
-
-showCards :: PlayingCards -> String
-showCards (PlayingCards rank suit) = show rank ++ " -- " ++ show suit
+-- | Pretty printer of a list of cards
+showCards :: [PlayingCards] -> String
+showCards [] = []
+showCards ((PlayingCards rank suit):ns) = show rank ++ "_" ++ show suit ++ " " ++ showCards ns
 
 -- | A deck consists of 52 cards
 allCards :: [PlayingCards]
@@ -96,14 +67,3 @@ compareRank a b
                | a > b = GT
                | a == b = EQ
                | otherwise = LT
-
--- -- | get a random card
--- randomCard :: RandomGen m => Rand m c
--- randomCard =
---     let
---       minB = minBound :: (Bounded c, PlayingCards c) => c
---       maxB = maxBound :: (Bounded c, PlayingCards c) => c in
---       do
---         randomd <- getRandomR(fromEnum minB, fromEnum maxB)
---         return $ toEnum randomd
-

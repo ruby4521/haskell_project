@@ -1,179 +1,156 @@
-{-# LANGUAGE BlockArguments #-}
 module Play where
 
 import Card
 import Control.Monad.State 
 import System.Random
-import Control.Monad.Random
 import System.Random.Shuffle
+import Control.Monad.Random
 
 
 -- | type of each player's state (cards on hand)
 type PlayerCardsHold = [PlayingCards]
+type CenterCards = [PlayingCards]
 
--- | type of each player give out cards
--- type PlayerGiveOut = PlayingCards
+-- | Global state: Game state
+data GameState = GameState {
+  player1 :: PlayerCardsHold, 
+  player2 :: PlayerCardsHold, 
+  player3 :: PlayerCardsHold, 
+  player4 :: PlayerCardsHold,
+  center :: CenterCards
+} deriving (Show)
 
--- type PlayerCheck = PlayingCards
-
-type GameCards = [PlayingCards]
-
--- | Shuffle a deck of cards with IO monad
--- >>> deck <- evalRandIO $ shuffleM $ allCards 
--- >>> deck
-
--- shufflemy :: RandomGen m => [c] -> Rand m [c]
--- shufflemy xs = shuffleM xs
-
--- | shuffle a deck
--- shuffleD :: IO [PlayingCards]
--- shuffleD = do 
---     deck <- evalRandIO $ shuffle $ allCards 
---     -- deck  liftRand $ shuffle $ allCards
---     return $ deck 
-
--- | Roll the dice to determine the sequence of players
-rollDice :: IO Int
-rollDice = getStdRandom $ randomR (1, 4)
-
--- | Draw one card from the deck 
--- draw1 :: Int -> [c] -> Maybe ([[c]],[c])
-
-getnthCards :: Int -> [a] -> a
-getnthCards n cardsList = cardsList !! n
-
--- | Display a range from a list: dispRange low high from a list
-
--- take :: Int -> [a] -> [a]
--- take n, applied to a list xs, returns the prefix of xs of length n, or xs itself if n > length xs
--- drop :: Int -> [a] -> [a]
--- drop n xs returns the suffix of xs after the first n elements, or [] if n > length xs
-
+-- | Apply player state with monad state
 -- | Each player get the cards from deck without state monad
+-- take n, applied to a list xs, returns the prefix of xs of length n, or xs itself if n > length xs
+-- take :: Int -> [a] -> [a]
+-- drop n xs returns the suffix of xs after the first n elements, or [] if n > length xs
+-- drop :: Int -> [a] -> [a]
+
 playerGet :: Int -> Int -> [a] -> [a]
 playerGet m n xs = take (n-m+1) (drop m xs)
 
--- | Apply player state with monad state
--- https://stackoverflow.com/questions/24103108/where-is-the-data-constructor-for-state
--- state :: (s -> (a, s)) -> State s a
--- runState :: State s a -> s -> (a, s)
+-- | Deal the card without state
+dealHand :: Int -> Int -> [PlayingCards]
+dealHand m n = do 
+  let deck = shuffle' allCards 52 (mkStdGen 1)
+  x <- playerGet m n deck
+  return x
 
--- pop :: State Stack Int  
--- pop = state $ \(x:xs) -> (x,xs)  
 
--- | Give out cards, similar to pop from a stack
-giveoutCards :: State PlayerCardsHold PlayingCards
-giveoutCards = state $ \(x:xs) -> (x,xs)
+
+
+-- | To check if Seven Diamonds is in one of the player's hand, then that player will first play that card
+start :: State GameState [PlayingCards]
+start = do
+  currentState <- get
+  let (p1, p2, p3, p4, c) = (player1 currentState, 
+                          player2 currentState, 
+                          player3 currentState, 
+                          player4 currentState, 
+                          center currentState)
+  case isIn (PlayingCards Seven Diamonds) p1 of
+    True -> put (currentState {player1 = delete (PlayingCards Seven Diamonds) p1, center = [PlayingCards Seven Diamonds]})
+    False -> put (currentState {player1 = p1, center = c})
+  
+  currentState' <- get
+  let c' = center currentState'
+  case isIn (PlayingCards Seven Diamonds) p2 of
+    True -> put (currentState' {player2 = delete (PlayingCards Seven Diamonds) p2, center = [PlayingCards Seven Diamonds]})
+    False -> put (currentState' {player2 = p2, center = c'})
+  
+  currentState'' <- get
+  let c'' = center currentState''
+  case isIn (PlayingCards Seven Diamonds) p3 of
+    True -> put (currentState'' {player3 = delete (PlayingCards Seven Diamonds) p3, center = [PlayingCards Seven Diamonds]})
+    False -> put (currentState'' {player3 = p3, center = c''})
+
+  currentState''' <- get
+  let c''' = center currentState'''
+  case isIn (PlayingCards Seven Diamonds) p4 of
+    True -> put (currentState''' {player4 = delete (PlayingCards Seven Diamonds) p4, center = [PlayingCards Seven Diamonds]})
+    False -> put (currentState''' {player4 = p4, center = c'''})
+
+  currentState'''' <- get
+  let c'''' = center currentState''''
+  return c''''
+
+
+-- | Check if a card is in a list of cards
+isIn :: Eq a => a -> [a] -> Bool
+isIn a xs = case (a `elem` xs) of
+                True -> True
+                False -> False
+
+-- | Delete that card from the list of cards
+delete :: Eq a => a -> [a] -> [a]
+delete y xs = filter (not . (==y) ) xs
+
+-- | Play cards
+play :: PlayingCards -> State GameState [PlayingCards]
+play x = do 
+  currentState <- get
+  let (p1, p2, p3, p4, c) = (player1 currentState, 
+                          player2 currentState, 
+                          player3 currentState, 
+                          player4 currentState, 
+                          center currentState)
+  case isIn x p1 of 
+    True ->  put (currentState {player1 = delete x p1, center = x:c})
+    False -> put (currentState {player1 = p1, center = c})
+
+  currentState' <- get
+  let c' = center currentState'
+  case isIn x p2 of 
+    True ->  put (currentState' {player2 = delete x p2, center = x:c'})
+    False -> put (currentState' {player2 = p2, center = c'})
+
+  currentState'' <- get
+  let c'' = center currentState''
+  case isIn x p3 of 
+    True ->  put (currentState'' {player3 = delete x p3, center = x:c''})
+    False -> put (currentState'' {player3 = p3, center = c''})
+
+  currentState''' <- get
+  let c''' = center currentState'''
+  case isIn x p4 of 
+    True ->  put (currentState''' {player4 = delete x p4, center = x:c'''})
+    False -> put (currentState''' {player4 = p4, center = c'''})
+
+  currentState'''' <- get
+  let c'''' = center currentState''''
+  return c''''
 
 -- | Check cards
-checkCards :: State PlayerCardsHold PlayingCards
-checkCards = state $ \(x:xs) -> (x,x:xs)
+checkCards :: Int -> State GameState [PlayingCards]
+checkCards n = do
+  currentState <- get
+  let (p1, p2, p3, p4, c) = (player1 currentState, 
+                          player2 currentState, 
+                          player3 currentState, 
+                          player4 currentState, 
+                          center currentState)
+  put (currentState {player1 = p1, 
+                     player2 = p2, 
+                     player3 = p3, 
+                     player4 = p4, 
+                     center = c})
+  case n of
+    1 -> return p1
+    2 -> return p2
+    3 -> return p3
+    4 -> return p4
+    5 -> return c
 
--- checkStart :: State PlayerCardsHold PlayingCards
--- checkStart = state $ \(x:xs) -> if (PlayingCards Seven Diamonds) `elem` (x:xs) == True
---                                   then (PlayingCards Seven Diamonds, xs)
--- checkStart = undefined
-
--- | Check game 
-checkGame :: State GameCards PlayingCards
-checkGame = state $ \(ys:xs) -> (ys,ys:xs)
--- checkGame = undefined
-
--- push :: Int -> State Stack ()  
--- push a = state $ \xs -> ((),a:xs)  
-
--- | Get cards, similar to push item to a stack, primitive: put x
--- get1Card :: PlayingCards -> State PlayerCardsHold ()
--- get1Card y = state $ \xs -> ((), y:xs)
-
-getnCards :: [PlayingCards] -> State PlayerCardsHold ()
-getnCards ys = state $ \xs -> ((), ys++xs)
-
-
--- | Each player's state
--- >>> runState player1State []
--- >>> evalState player1State []
---  returns the final result: PlayingCards Ten Clubs
--- >>> execState player1State []
---  returns the final state: [PlayingCards Ten Clubs,PlayingCards Ten Spades, ....,]
--- shuffle': do a random shuffle without IO monad
--- http://hackage.haskell.org/package/random-shuffle-0.0.4/docs/System-Random-Shuffle.html
-
-
-player1State :: State PlayerCardsHold PlayingCards
-player1State = do
-  let deck = shuffle' allCards 52 (mkStdGen 0)
-  put $ playerGet 0 12 deck
-  -- getnCards $ playerGet 0 12 deck
-  checkCards
-
-player2State :: State PlayerCardsHold PlayingCards
-player2State = do
-  let deck = shuffle' allCards 52 (mkStdGen 0)
-  -- getnCards $ playerGet 13 25 deck
-  put $ playerGet 13 25 deck
-  checkCards
-
-player3State :: State PlayerCardsHold PlayingCards
-player3State = do
-  let deck = shuffle' allCards 52 (mkStdGen 0)
-  -- getnCards $ playerGet 26 38 deck
-  put $ playerGet 26 38 deck
-  giveoutCards
-
-player4State :: State PlayerCardsHold PlayingCards
-player4State = do
-  let deck = shuffle' allCards 52 (mkStdGen 0)
-  -- getnCards $ playerGet 39 51 deck
-  put $ playerGet 39 51 deck
-  -- giveoutCards
-  checkCards
-
-
--- deckState :: State DeckCardsHold PlayingCards
--- deckState = undefined
-
--- | game state
--- data GameState = GameState {
---   player1State :: PlayingCards
---   player2State :: PlayingCards
---   player3State :: PlayingCards
---   player4State :: PlayingCards
--- }
-
--- gameState :: State Game PlayingCards
--- gameState = undefined
-
-run1 :: IO ()
-run1 = do
-  putStrLn "Player1 check:"
-  print $ evalState player1State []
-  putStrLn "Player1 hand:"
-  print $ execState player1State []
-
-run2 :: IO ()
-run2 = do
-  putStrLn "Player2 check:"
-  print $ evalState player2State []
-  putStrLn "Player2 hand:"
-  print $ execState player2State []
-
-run3 :: IO ()
-run3 = do
-  putStrLn "Player3 check:"
-  print $ evalState player3State []
-  putStrLn "Player3 hand:"
-  print $ execState player3State []
-
-run4 :: IO ()
-run4 = do
-  putStrLn "Player4 check:"
-  print $ evalState player4State []
-  putStrLn "Player4 hand:"
-  print $ execState player4State []
-
--- safeDiv :: Int -> Int -> Maybe Int
--- safeDiv x y = do
---   guard (y /= 0)
---   return (x `div` y)
-
+-- | Pretty printer of the GameState
+showGameState :: GameState -> String  
+showGameState (GameState {player1 = p1, 
+                      player2 = p2, 
+                      player3 = p3, 
+                      player4 = p4, 
+                      center = c
+                      }) = "Player 1 has: " ++ showCards p1 ++ "\n" ++
+                          "Player 2 has: " ++ showCards p2 ++ "\n" ++
+                          "Player 3 has: " ++ showCards p3 ++ "\n" ++
+                          "Player 4 has: " ++ showCards p4 ++ "\n" ++
+                          "Center is: " ++ showCards c
